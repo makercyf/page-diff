@@ -1,0 +1,35 @@
+[project]
+name = "page-diff"
+version = "1.0.0"
+description = "Compare pages across local image folders using perceptual hashing."
+readme = "README.md"
+requires-python = ">=3.13"
+license = "MIT"
+authors = [
+    { name = "makercyf" },
+]
+keywords = [
+    "duplicate-detection",
+    "image-comparison",
+    "perceptual-hashing",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: End Users/Desktop",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Multimedia :: Graphics",
+]
+dependencies = [
+    "fastapi>=0.139.0",
+    "imagededup>=0.3.3.post2",
+    "numpy>=2.5.1",
+    "pillow>=12.3.0",
+    "python-multipart>=0.0.32",
+    "uvicorn[standard]>=0.51.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/makercyf/page-diff"
+Repository = "https://github.com/makercyf/page-diff.git"
+Issues = "https://github.com/makercyf/page-diff/issues"

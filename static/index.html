@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Page Diff — Image Comparison</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<!-- <link rel="stylesheet" href="/static/style.css"> -->
+</head>
+<body>
+<style>
+:root {
+  --bg: #14161a;
+  --panel: #1b1e23;
+  --panel-raised: #21252b;
+  --line: rgba(255,255,255,0.08);
+  --line-strong: rgba(255,255,255,0.16);
+  --ink: #eef0f2;
+  --muted: #8b9099;
+  --muted-soft: #5f636b;
+  --mat: #efe8dc;
+  --mat-shadow: rgba(0,0,0,0.35);
+  --brass: #cf9a44;
+  --brass-ink: #2a1e08;
+  --good: #4caf7d;
+  --warn: #d9a441;
+  --bad: #d1594a;
+  --font-display: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  --radius: 10px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-display);
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--brass);
+  outline-offset: 2px;
+}
+
+/* ---------------------------------------------------------------- topbar */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 28px;
+  border-bottom: 1px solid var(--line);
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 20;
+}
+
+.brand { display: flex; align-items: center; gap: 12px; }
+
+.brand-mark {
+  font-size: 22px;
+  color: var(--brass);
+  line-height: 1;
+}
+
+.brand-title {
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: 15px;
+}
+
+.brand-sub {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.03em;
+  margin-top: 2px;
+}
+
+.topbar-ticks {
+  flex: 1;
+  max-width: 220px;
+  height: 10px;
+  margin-left: 24px;
+  background-image: repeating-linear-gradient(
+    to right,
+    var(--line-strong) 0px, var(--line-strong) 1px,
+    transparent 1px, transparent 9px
+  );
+  opacity: 0.7;
+  display: none;
+}
+
+@media (min-width: 720px) {
+  .topbar-ticks { display: block; }
+}
+
+/* ---------------------------------------------------------------- layout */
+
+main {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 28px 20px 80px;
+}
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 24px;
+}
+
+.card-head h1 {
+  font-size: 20px;
+  margin: 0 0 6px;
+  font-weight: 600;
+}
+
+.card-head p {
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.5;
+  margin: 0 0 20px;
+  max-width: 640px;
+}
+
+.ref-word {
+  color: var(--brass);
+  font-family: var(--font-mono);
+}
+
+/* ---------------------------------------------------------------- form */
+
+.path-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.path-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.path-tag {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--bg);
+  background: var(--muted);
+  border-radius: 5px;
+  padding: 3px 7px;
+  min-width: 30px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.path-row.is-ref .path-tag {
+  background: var(--brass);
+}
+
+.path-row input[type="text"] {
+  flex: 1;
+  background: var(--panel-raised);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 10px 12px;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.path-row input[type="text"]::placeholder {
+  color: var(--muted-soft);
+}
+
+.path-row input[type="text"]:focus {
+  border-color: var(--brass);
+}
+
+.remove-path-btn {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  border-radius: 7px;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.remove-path-btn:hover { border-color: var(--bad); color: var(--bad); }
+.remove-path-btn:disabled { opacity: 0.25; cursor: not-allowed; }
+
+.btn-ghost {
+  background: transparent;
+  border: 1px dashed var(--line-strong);
+  color: var(--muted);
+  border-radius: 7px;
+  padding: 8px 14px;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  cursor: pointer;
+  margin-bottom: 22px;
+}
+
+.btn-ghost:hover:not(:disabled) { color: var(--brass); border-color: var(--brass); }
+.btn-ghost:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.field-row { margin-bottom: 18px; }
+
+.field-label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.segmented {
+  display: inline-flex;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.seg-opt {
+  position: relative;
+  cursor: pointer;
+}
+
+.seg-opt input { position: absolute; opacity: 0; pointer-events: none; }
+
+.seg-opt span {
+  display: block;
+  padding: 8px 16px;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--muted);
+  border-right: 1px solid var(--line);
+}
+
+.seg-opt:last-child span { border-right: none; }
+
+.seg-opt input:checked + span {
+  background: var(--brass);
+  color: var(--brass-ink);
+  font-weight: 700;
+}
+
+.field-hint {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--muted-soft);
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13.5px;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.advanced {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 18px;
+}
+
+.advanced summary {
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.advanced[open] summary { color: var(--brass); margin-bottom: 10px; }
+
+.advanced-grid {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.mini-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.mini-field input {
+  width: 90px;
+  background: var(--panel-raised);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 7px 9px;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.mini-field input:focus { border-color: var(--brass); }
+
+.actions-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 0;
+}
+
+.progress-track {
+  flex: 1 1 160px;
+  min-width: 120px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--brass);
+  transition: width 0.2s ease;
+}
+
+.btn-primary {
+  background: var(--brass);
+  color: var(--brass-ink);
+  border: none;
+  border-radius: 8px;
+  padding: 11px 22px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.btn-primary:hover { filter: brightness(1.08); }
+.btn-primary:disabled { opacity: 0.5; cursor: wait; }
+
+.status-msg {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.status-msg.is-error { color: var(--bad); }
+
+/* ---------------------------------------------------------------- results bar */
+
+.results { margin-top: 26px; }
+
+.results-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 4px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.stats {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.stats b { color: var(--ink); font-weight: 600; }
+
+.lock-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+/* ---------------------------------------------------------------- rows */
+
+.diff-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.diff-row {
+  display: grid;
+  gap: 10px;
+}
+
+.diff-row.cols-2 { grid-template-columns: 1fr 1fr; }
+.diff-row.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+.diff-row.cols-4 { grid-template-columns: 1fr 1fr; }
+
+.cell {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 10px;
+  position: relative;
+}
+
+.cell-frame {
+  background: var(--mat);
+  border-radius: 6px;
+  padding: 8px;
+  box-shadow: inset 0 0 0 1px var(--mat-shadow);
+  position: relative;
+}
+
+.cell-frame::before {
+  content: "";
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: 0;
+  height: 6px;
+  background-image: repeating-linear-gradient(
+    to right,
+    var(--mat-shadow) 0px, var(--mat-shadow) 2px,
+    transparent 2px, transparent 8px
+  );
+  opacity: 0.35;
+}
+
+.cell-frame img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 3px;
+  cursor: zoom-in;
+  background: #fff;
+}
+
+.cell-tag {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cell.is-ref .cell-tag { color: var(--brass); }
+
+.cell-name {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.badge {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+
+.badge.sev-good { background: rgba(76,175,125,0.16); color: var(--good); }
+.badge.sev-warn { background: rgba(217,164,65,0.16); color: var(--warn); }
+.badge.sev-bad  { background: rgba(209,89,74,0.16); color: var(--bad); }
+
+.meter {
+  height: 3px;
+  border-radius: 2px;
+  background: var(--line);
+  margin-top: 6px;
+  overflow: hidden;
+}
+
+.meter-fill { height: 100%; }
+.meter-fill.sev-good { background: var(--good); }
+.meter-fill.sev-warn { background: var(--warn); }
+.meter-fill.sev-bad  { background: var(--bad); }
+
+.cell.empty .cell-frame {
+  background: transparent;
+  border: 1px dashed var(--line-strong);
+  box-shadow: none;
+  min-height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cell.empty .cell-frame::before { display: none; }
+
+.empty-msg {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted-soft);
+  text-align: center;
+  padding: 20px 6px;
+}
+
+.section-divider {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 26px 0 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+/* ---------------------------------------------------------------- unlocked panes */
+
+.panes {
+  display: grid;
+  gap: 14px;
+}
+
+.panes.cols-2, .panes.cols-3 { grid-auto-flow: column; grid-auto-columns: 1fr; }
+.panes.cols-4 { grid-template-columns: 1fr 1fr; }
+
+.pane {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.pane-head {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pane.is-ref .pane-head { color: var(--brass); }
+
+.pane-scroll {
+  overflow-y: auto;
+  height: 74vh;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ---------------------------------------------------------------- misc */
+
+.empty-state {
+  color: var(--muted-soft);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  padding: 30px 10px;
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .diff-row.cols-3 { grid-template-columns: 1fr; }
+  .diff-row.cols-2 { grid-template-columns: 1fr; }
+  .diff-row.cols-4 { grid-template-columns: 1fr; }
+  .panes.cols-2, .panes.cols-3, .panes.cols-4 { grid-auto-flow: row; grid-template-columns: 1fr; }
+}
+
+</style>
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark">◐</span>
+    <div>
+      <div class="brand-title">PAGE DIFF</div>
+      <div class="brand-sub">content matched page comparison</div>
+    </div>
+  </div>
+  <div class="topbar-ticks" aria-hidden="true"></div>
+</header>
+
+<main>
+
+  <section class="setup card" id="setup-card">
+    <div class="card-head">
+      <h1>Compare folders</h1>
+      <p>Enter 2 to 4 absolute folder paths. The first folder is the <span class="ref-word">reference</span> — every other folder is matched against it by image content, not filename.</p>
+    </div>
+
+    <form id="setup-form">
+      <div id="path-rows" class="path-rows"></div>
+
+      <button type="button" id="add-path-btn" class="btn-ghost">+ Add folder</button>
+
+      <div class="field-row">
+        <div class="field">
+          <label class="field-label">Hash method</label>
+          <div class="segmented" id="method-segmented">
+            <label class="seg-opt"><input type="radio" name="method" value="phash" checked><span>PHash</span></label>
+            <label class="seg-opt"><input type="radio" name="method" value="dhash"><span>DHash</span></label>
+            <label class="seg-opt"><input type="radio" name="method" value="whash"><span>WHash</span></label>
+            <label class="seg-opt"><input type="radio" name="method" value="ahash"><span>AHash</span></label>
+          </div>
+          <p class="field-hint" id="method-hint">Perceptual hashing — robust default, good at catching resized or recompressed pages.</p>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <label class="checkbox-row">
+          <input type="checkbox" id="skip-blank-cb" checked>
+          <span>Skip blank pages (near-solid white / black)</span>
+        </label>
+      </div>
+
+      <details class="advanced">
+        <summary>Advanced</summary>
+        <div class="advanced-grid">
+          <label class="mini-field">
+            <span>Minimum match similarity %</span>
+            <input type="number" id="min-sim-input" min="0" max="100" step="1" value="50">
+          </label>
+          <label class="mini-field">
+            <span>Blank page sensitivity</span>
+            <input type="number" id="blank-threshold-input" min="0" max="40" step="1" value="6">
+          </label>
+        </div>
+        <p class="field-hint">Pairs scoring below the similarity floor are left unmatched rather than forced together. Higher blank sensitivity flags more near-solid pages as blank.</p>
+      </details>
+
+      <div class="field-row actions-row">
+        <button type="submit" class="btn-primary" id="compare-btn">Compare pages</button>
+        <div class="progress-track" id="progress-track" hidden>
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
+        <span class="status-msg" id="status-msg"></span>
+      </div>
+    </form>
+  </section>
+
+  <section class="results" id="results-section" hidden>
+    <div class="results-bar">
+      <div class="stats" id="stats-line"></div>
+      <label class="lock-toggle">
+        <input type="checkbox" id="lock-scroll-cb" checked>
+        <span id="lock-label">Scroll locked together</span>
+      </label>
+    </div>
+
+    <div id="results-body"></div>
+  </section>
+
+</main>
+
+<script>
+(() => {
+  "use strict";
+
+  const MAX_PATHS = 4;
+  const MIN_PATHS = 2;
+
+  const pathRowsEl = document.getElementById("path-rows");
+  const addPathBtn = document.getElementById("add-path-btn");
+  const form = document.getElementById("setup-form");
+  const compareBtn = document.getElementById("compare-btn");
+  const statusMsg = document.getElementById("status-msg");
+  const progressTrack = document.getElementById("progress-track");
+  const progressFill = document.getElementById("progress-fill");
+  const methodHint = document.getElementById("method-hint");
+  const resultsSection = document.getElementById("results-section");
+  const statsLine = document.getElementById("stats-line");
+  const resultsBody = document.getElementById("results-body");
+  const lockScrollCb = document.getElementById("lock-scroll-cb");
+  const lockLabel = document.getElementById("lock-label");
+
+  const METHOD_HINTS = {
+    phash: "Perceptual hashing (PHash) \u2014 robust default, good at catching resized or recompressed pages.",
+    dhash: "Difference hashing (DHash) \u2014 fast, sensitive to edges and gradients; good for line art / manga.",
+    whash: "Wavelet hashing (WHash) \u2014 robust to small distortions, scan noise and watermarks.",
+    ahash: "Average hashing (AHash) \u2014 fastest and simplest; best for near-identical pages only.",
+  };
+
+  let currentData = null;
+
+  // ---------------------------------------------------------------- path rows
+
+  function renumberRows() {
+    const rows = [...pathRowsEl.querySelectorAll(".path-row")];
+    rows.forEach((row, idx) => {
+      const tag = row.querySelector(".path-tag");
+      const input = row.querySelector("input");
+      const removeBtn = row.querySelector(".remove-path-btn");
+      row.classList.toggle("is-ref", idx === 0);
+      tag.textContent = idx === 0 ? "REF" : "F" + (idx + 1);
+      input.placeholder = idx === 0
+        ? "/absolute/path/to/reference-folder"
+        : "/absolute/path/to/folder-" + (idx + 1);
+      removeBtn.disabled = rows.length <= MIN_PATHS;
+    });
+    addPathBtn.disabled = rows.length >= MAX_PATHS;
+  }
+
+  function addPathRow() {
+    const rows = pathRowsEl.querySelectorAll(".path-row").length;
+    if (rows >= MAX_PATHS) return;
+
+    const row = document.createElement("div");
+    row.className = "path-row";
+    row.innerHTML = `
+      <span class="path-tag"></span>
+      <input type="text" autocomplete="off" spellcheck="false">
+      <button type="button" class="remove-path-btn" title="Remove folder">\u00d7</button>
+    `;
+    row.querySelector(".remove-path-btn").addEventListener("click", () => {
+      if (pathRowsEl.querySelectorAll(".path-row").length <= MIN_PATHS) return;
+      row.remove();
+      renumberRows();
+    });
+    pathRowsEl.appendChild(row);
+    renumberRows();
+  }
+
+  addPathBtn.addEventListener("click", addPathRow);
+  addPathRow();
+  addPathRow();
+
+  document.querySelectorAll('input[name="method"]').forEach((radio) => {
+    radio.addEventListener("change", () => {
+      methodHint.textContent = METHOD_HINTS[radio.value] || "";
+    });
+  });
+
+  // ---------------------------------------------------------------- helpers
+
+  function esc(s) {
+    const div = document.createElement("div");
+    div.textContent = s == null ? "" : String(s);
+    return div.innerHTML;
+  }
+
+  function shortName(p) {
+    const parts = String(p).replace(/[\\/]+$/, "").split(/[\\/]/);
+    return parts[parts.length - 1] || p;
+  }
+
+  function sevClass(sim) {
+    if (sim >= 90) return "sev-good";
+    if (sim >= 70) return "sev-warn";
+    return "sev-bad";
+  }
+
+  function imgTag(path) {
+    const src = "/api/image?path=" + encodeURIComponent(path);
+    return `<img src="${src}" loading="lazy" alt="" title="Click to open full size" onclick="window.open('${src.replace(/'/g, "%27")}','_blank')">`;
+  }
+
+  function renderCell(cfg) {
+    if (cfg.kind === "ref") {
+      return `<div class="cell is-ref">
+        <div class="cell-tag"><span>${esc(cfg.tag)}</span></div>
+        <div class="cell-frame">${imgTag(cfg.path)}</div>
+        <div class="cell-name">${esc(cfg.name)}</div>
+      </div>`;
+    }
+    if (cfg.kind === "match") {
+      const sev = sevClass(cfg.similarity);
+      const pct = cfg.similarity.toFixed(1);
+      return `<div class="cell">
+        <div class="cell-tag"><span>${esc(cfg.tag)}</span><span class="badge ${sev}">${pct}%</span></div>
+        <div class="cell-frame">${imgTag(cfg.path)}</div>
+        <div class="meter"><div class="meter-fill ${sev}" style="width:${Math.max(cfg.similarity, 3)}%"></div></div>
+        <div class="cell-name">${esc(cfg.name)}</div>
+      </div>`;
+    }
+    if (cfg.kind === "extra") {
+      return `<div class="cell">
+        <div class="cell-tag"><span>${esc(cfg.tag)}</span><span class="badge sev-warn">EXTRA</span></div>
+        <div class="cell-frame">${imgTag(cfg.path)}</div>
+        <div class="cell-name">${esc(cfg.name)}</div>
+      </div>`;
+    }
+    // empty
+    return `<div class="cell empty">
+      <div class="cell-tag"><span>${esc(cfg.tag)}</span></div>
+      <div class="cell-frame"><div class="empty-msg">${esc(cfg.msg)}</div></div>
+    </div>`;
+  }
+
+  function mainRowCells(row, n, shortNames) {
+    const cells = [{
+      kind: "ref",
+      tag: "REF \u00b7 " + shortNames[0],
+      path: row.reference.path,
+      name: row.reference.name,
+    }];
+    for (let i = 1; i < n; i++) {
+      const m = row.matches[i - 1];
+      if (m) {
+        cells.push({ kind: "match", tag: shortNames[i], path: m.path, name: m.name, similarity: m.similarity });
+      } else {
+        cells.push({ kind: "empty", tag: shortNames[i], msg: "No match found \u2014 possibly a missing page" });
+      }
+    }
+    return cells;
+  }
+
+  function extraRowCells(extra, n, shortNames) {
+    const cells = [{ kind: "empty", tag: "REF \u00b7 " + shortNames[0], msg: "No reference page" }];
+    for (let i = 1; i < n; i++) {
+      if (i === extra.folder_index) {
+        cells.push({ kind: "extra", tag: shortNames[i], path: extra.image.path, name: extra.image.name });
+      } else {
+        cells.push({ kind: "empty", tag: shortNames[i], msg: "Not compared" });
+      }
+    }
+    return cells;
+  }
+
+  // ---------------------------------------------------------------- render modes
+
+  function renderLocked(n, mainCellsList, extraCellsList) {
+    let html = '<div class="diff-list">';
+    if (mainCellsList.length === 0) {
+      html += '<div class="empty-state">No matched pages.</div>';
+    }
+    mainCellsList.forEach((cells) => {
+      html += `<div class="diff-row cols-${n}">` + cells.map(renderCell).join("") + `</div>`;
+    });
+    html += "</div>";
+
+    if (extraCellsList.length) {
+      html += `<div class="section-divider">Extra / unmatched pages (${extraCellsList.length})</div><div class="diff-list">`;
+      extraCellsList.forEach((cells) => {
+        html += `<div class="diff-row cols-${n}">` + cells.map(renderCell).join("") + `</div>`;
+      });
+      html += "</div>";
+    }
+    return html;
+  }
+
+  function renderUnlocked(n, mainCellsList, extraCellsList, shortNames) {
+    const paneClass = "cols-" + n;
+    let html = `<div class="panes ${paneClass}">`;
+    for (let i = 0; i < n; i++) {
+      const isRef = i === 0;
+      html += `<div class="pane ${isRef ? "is-ref" : ""}">
+        <div class="pane-head">${isRef ? "REF \u00b7 " : ""}${esc(shortNames[i])}</div>
+        <div class="pane-scroll">`;
+      mainCellsList.forEach((cells) => { html += renderCell(cells[i]); });
+      if (!isRef) {
+        const extrasForFolder = extraCellsList
+          .map((ec) => ec[i])
+          .filter((cfg) => cfg.kind === "extra");
+        if (extrasForFolder.length) {
+          html += `<div class="section-divider" style="margin:10px 0 2px;padding-top:8px;">Extra pages (${extrasForFolder.length})</div>`;
+          extrasForFolder.forEach((cfg) => { html += renderCell(cfg); });
+        }
+      }
+      html += `</div></div>`;
+    }
+    html += `</div>`;
+    return html;
+  }
+
+  function renderAll() {
+    if (!currentData) return;
+    const n = currentData.folder_labels.length;
+    const shortNames = currentData.folder_labels.map(shortName);
+    const mainCellsList = currentData.rows.map((r) => mainRowCells(r, n, shortNames));
+    const extraCellsList = currentData.extra_rows.map((e) => extraRowCells(e, n, shortNames));
+
+    const s = currentData.stats;
+    statsLine.innerHTML = `<b>${s.matched_rows}</b> matched pages &middot; ` +
+      `<b>${s.extra_count}</b> extra/unmatched &middot; ` +
+      `blanks skipped: ${s.blank_skipped.join(" / ")} &middot; ` +
+      `method: <b>${esc(s.method.toUpperCase())}</b> &middot; ` +
+      `reference: <b>${esc(shortNames[0])}</b>`;
+
+    resultsBody.innerHTML = lockScrollCb.checked
+      ? renderLocked(n, mainCellsList, extraCellsList)
+      : renderUnlocked(n, mainCellsList, extraCellsList, shortNames);
+  }
+
+  lockScrollCb.addEventListener("change", () => {
+    lockLabel.textContent = lockScrollCb.checked ? "Scroll locked together" : "Scroll independent";
+    renderAll();
+  });
+
+  // ---------------------------------------------------------------- submit
+
+  let activeStream = null;
+
+  function setProgress(fraction) {
+    const pct = Math.max(0, Math.min(1, fraction)) * 100;
+    progressFill.style.width = pct.toFixed(1) + "%";
+  }
+
+  function stageLabel(stage) {
+    if (stage === "scanning") return "Scanning";
+    if (stage === "encoding") return "Hashing";
+    if (stage === "matching") return "Matching";
+    if (stage === "finalizing") return "Finalizing";
+    return "Working";
+  }
+
+  function handleProgress(info) {
+    const withinStage = info.total ? info.current / info.total : 0;
+    const overall = info.total_stages ? (info.stage_index + withinStage) / info.total_stages : 0;
+    setProgress(overall);
+    const counts = info.total ? ` (${info.current}/${info.total})` : "";
+    statusMsg.textContent = `\u005b${stageLabel(info.stage)}\u005d ${info.message || ""}${counts}`;
+  }
+
+  function closeStream() {
+    if (activeStream) {
+      activeStream.close();
+      activeStream = null;
+    }
+  }
+
+  function finishRun() {
+    compareBtn.disabled = false;
+    progressTrack.hidden = true;
+  }
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const paths = [...pathRowsEl.querySelectorAll("input[type=text]")].map((i) => i.value.trim());
+    if (paths.some((p) => !p)) {
+      statusMsg.textContent = "Fill in every folder path, or remove the empty row.";
+      statusMsg.classList.add("is-error");
+      return;
+    }
+    const method = document.querySelector('input[name="method"]:checked').value;
+    const skipBlank = document.getElementById("skip-blank-cb").checked;
+    const minSimilarity = Number(document.getElementById("min-sim-input").value) || 0;
+    const blankThreshold = Number(document.getElementById("blank-threshold-input").value) || 0;
+
+    closeStream();
+    compareBtn.disabled = true;
+    statusMsg.classList.remove("is-error");
+    statusMsg.textContent = "Starting comparison\u2026";
+    progressTrack.hidden = false;
+    setProgress(0);
+
+    try {
+      const res = await fetch("/api/compare", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          paths,
+          method,
+          skip_blank: skipBlank,
+          min_similarity: minSimilarity,
+          blank_threshold: blankThreshold,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.detail || "Comparison failed.");
+      }
+
+      const jobId = data.job_id;
+      const stream = new EventSource("/api/compare/stream/" + encodeURIComponent(jobId));
+      activeStream = stream;
+
+      stream.addEventListener("progress", (ev) => {
+        try {
+          handleProgress(JSON.parse(ev.data));
+        } catch (err) {
+          // ignore a malformed progress frame, next one will arrive shortly
+        }
+      });
+
+      stream.addEventListener("result", (ev) => {
+        closeStream();
+        currentData = JSON.parse(ev.data);
+        setProgress(1);
+        statusMsg.textContent = "Done.";
+        resultsSection.hidden = false;
+        renderAll();
+        resultsSection.scrollIntoView({ behavior: "smooth", block: "start" });
+        finishRun();
+      });
+
+      // "job_error" is our own named SSE event for a failed comparison, kept
+      // distinct from EventSource's built-in "error" event (which fires on
+      // real connection problems and is handled by stream.onerror below).
+      stream.addEventListener("job_error", (ev) => {
+        closeStream();
+        let message = "Comparison failed.";
+        if (ev.data) {
+          try { message = JSON.parse(ev.data).detail || message; } catch (err) { /* keep default */ }
+        }
+        statusMsg.textContent = message;
+        statusMsg.classList.add("is-error");
+        finishRun();
+      });
+
+      stream.onerror = () => {
+        if (!activeStream) return; // already closed after a normal result/job_error
+        closeStream();
+        statusMsg.textContent = "Lost connection to the server while comparing.";
+        statusMsg.classList.add("is-error");
+        finishRun();
+      };
+    } catch (err) {
+      statusMsg.textContent = err.message || String(err);
+      statusMsg.classList.add("is-error");
+      finishRun();
+    }
+  });
+})();
+
+</script>
+</body>
+</html>
